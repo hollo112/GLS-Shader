@@ -19,9 +19,13 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 
 	//Load shaders
 	m_SolidRectShader = CompileShaders("./Shaders/SolidRect.vs", "./Shaders/SolidRect.fs");
-	
+	m_ParticleShader = CompileShaders("./Shaders/Particle.vs", "./Shaders/Particle.fs");	// 파티클 쉐이더 사용
+
 	//Create VBOs
 	CreateVertexBufferObjects();
+
+	//Create Paricle Cloud
+	CreateParticleCloud(1000);
 
 	if (m_SolidRectShader > 0 && m_VBORect > 0)
 	{
@@ -47,15 +51,29 @@ void Renderer::CreateVertexBufferObjects()
 	glBindBuffer(GL_ARRAY_BUFFER, m_VBORect);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(rect), rect, GL_STATIC_DRAW);
 
-	float vertices[] = { 
-		0.0f, 0.0f, 0.0f, 
-		1.0f, 0.0f, 0.0f, 
-		1.0f, 1.0f, 0.0f };
+	//float vertices[] = { 
+	//	-0.1f, 0.1f, 0.0f,
+	//	-0.1f, -0.1f, 0.0f,
+	//	0.1f, 0.1f, 0.0f };
 
-	glGenBuffers(1, &m_TestVBO);					//	m_TestVBO에 특정한 아이디가 만들어져 들어가게됨
-	glBindBuffer(GL_ARRAY_BUFFER, m_TestVBO);		// 작업대에 VBO를 올려놓음
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	//glGenBuffers(1, &m_TestVBO);					//	m_TestVBO에 특정한 아이디가 만들어져 들어가게됨
+	//glBindBuffer(GL_ARRAY_BUFFER, m_TestVBO);		// 작업대에 VBO를 올려놓음
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+	float size = 0.05;
+	float particleVerts[] = {
+		-size, -size, 0.0f,
+		size, size, 0.0f,
+		-size, size, 0.0f,
+		-size, -size, 0.0f,
+		size, -size, 0.0f,
+		size, size, 0.0f
+	};
+	//float* a = new float[100];							// X -> sizeof(a)를 하면 포인터의 크기를 넘겨줌
+
+	glGenBuffers(1, &m_ParticleVBO);					//	m_TestVBO에 특정한 아이디가 만들어져 들어가게됨
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBO);		// 작업대에 VBO를 올려놓음
+	glBufferData(GL_ARRAY_BUFFER, sizeof(particleVerts), particleVerts, GL_STATIC_DRAW);
 
 }
 
@@ -164,7 +182,7 @@ GLuint Renderer::CompileShaders(char* filenameVS, char* filenameFS)
 	}
 
 	glUseProgram(ShaderProgram);
-	std::cout << filenameVS << ", " << filenameFS << " Shader compiling is done.";
+	std::cout << filenameVS << ", " << filenameFS << " Shader compiling is done." << std::endl;
 
 	return ShaderProgram;
 }
@@ -199,18 +217,112 @@ void Renderer::GetGLPosition(float x, float y, float *newX, float *newY)
 	*newY = y * 2.f / m_WindowSizeY;
 }
 
+void Renderer::CreateParticleCloud(int numParticles)
+{
+	float centerX, centerY;
+	centerX = 0.f;
+	centerY = 0.f;
+	float size = 0.01;
+	int particleCount = numParticles;
+	int vertexCount = particleCount * 6;
+	int floatCount = vertexCount * 3;
+
+	float* vertices = NULL;
+	vertices = new float[floatCount];
+
+	int index = 0;
+	for (int i = 0; i < particleCount; ++i) {
+		centerX = ((float)rand() / (float)RAND_MAX) * 2.f - 1.f;		// -1 ~ 1
+		centerY = ((float)rand() / (float)RAND_MAX) * 2.f - 1.f;		// -1 ~ 1
+		vertices[index] = centerX - size; ++index;
+		vertices[index] = centerY - size; ++index;
+		vertices[index] = 0.f; ++index;
+		vertices[index] = centerX + size; ++index;
+		vertices[index] = centerY + size; ++index;
+		vertices[index] = 0.f; ++index;
+		vertices[index] = centerX - size; ++index;
+		vertices[index] = centerY + size; ++index;
+		vertices[index] = 0.f; ++index;	//triangle1
+
+		vertices[index] = centerX - size; ++index;
+		vertices[index] = centerY - size; ++index;
+		vertices[index] = 0.f; ++index;
+		vertices[index] = centerX + size; ++index;
+		vertices[index] = centerY - size; ++index;
+		vertices[index] = 0.f; ++index;
+		vertices[index] = centerX + size; ++index;
+		vertices[index] = centerY + size; ++index;
+		vertices[index] = 0.f; ++index;	//triangle2
+	}
+
+	glGenBuffers(1, &m_ParticleCloudVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleCloudVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * floatCount, vertices, GL_STATIC_DRAW);
+	m_ParticleCloudVertexCount = vertexCount;
+
+	delete[] vertices;
+}
+
 void Renderer::DrawTest()
 {
 	//Program select
 	glUseProgram(m_SolidRectShader);															// 
 
 	int attribPosition = glGetAttribLocation(m_SolidRectShader, "a_Position");
-	glEnableVertexAttribArray(attribPosition);
+	glEnableVertexAttribArray(attribPosition);													// attribPosition을 쓸것이다
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_TestVBO);
-	glVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);			// 3-> float포인트의 개수, 0 -> GL_ARRAY_BUFFER의 시작점부터 읽어라
+	glVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);			// 3-> float포인트의 개수, 0 -> GL_ARRAY_BUFFER의 시작점부터 읽어라, sizeof(float) * 3 -> 3으로 나눠짐
 
 	glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	glDisableVertexAttribArray(attribPosition);
+}
+
+void Renderer::DrawParticle()
+{
+	//Program select
+	GLuint shader = m_ParticleShader;
+	glUseProgram(shader);															// 
+
+	int ulTime = glGetUniformLocation(shader, "u_Time");
+	glUniform1f(ulTime, m_ParticleTime);
+	m_ParticleTime += 0.016;
+
+	int ulPeriod = glGetUniformLocation(shader, "u_Period");
+	glUniform1f(ulPeriod, 8.0);
+
+	int attribPosition = glGetAttribLocation(shader, "a_Position");
+	glEnableVertexAttribArray(attribPosition);													// attribPosition을 쓸것이다
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBO);
+	glVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);			// 3-> float포인트의 개수, 0 -> GL_ARRAY_BUFFER의 시작점부터 읽어라, sizeof(float) * 3 -> 3으로 나눠짐
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glDisableVertexAttribArray(attribPosition);
+}
+
+void Renderer::DrawParticleCloud()
+{
+	//Program select
+	GLuint shader = m_ParticleShader;
+	glUseProgram(shader);															// 
+
+	int ulTime = glGetUniformLocation(shader, "u_Time");
+	glUniform1f(ulTime, m_ParticleTime);
+	m_ParticleTime += 0.016;
+
+	int ulPeriod = glGetUniformLocation(shader, "u_Period");
+	glUniform1f(ulPeriod, 8.0);
+
+	int attribPosition = glGetAttribLocation(shader, "a_Position");
+	glEnableVertexAttribArray(attribPosition);													// attribPosition을 쓸것이다
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleCloudVBO);
+	glVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);			// 3-> float포인트의 개수, 0 -> GL_ARRAY_BUFFER의 시작점부터 읽어라, sizeof(float) * 3 -> 3으로 나눠짐
+
+	glDrawArrays(GL_TRIANGLES, 0, m_ParticleCloudVertexCount);
 
 	glDisableVertexAttribArray(attribPosition);
 }
