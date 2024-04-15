@@ -2,6 +2,6 @@
 D:\download\BaseProject\SimpleGame\Renderer.cpp(64,19): warning C4305: '초기화 중': 'double'에서 'float'(으)로 잘립니다.
 D:\download\BaseProject\SimpleGame\Renderer.cpp(93,34): warning C4267: '=': 'size_t'에서 'GLint'(으)로 변환하면서 데이터가 손실될 수 있습니다.
 D:\download\BaseProject\SimpleGame\Renderer.cpp(226,20): warning C4305: '초기화 중': 'double'에서 'float'(으)로 잘립니다.
-D:\download\BaseProject\SimpleGame\Renderer.cpp(367,25): warning C4305: '+=': 'double'에서 'float'(으)로 잘립니다.
-D:\download\BaseProject\SimpleGame\Renderer.cpp(392,25): warning C4305: '+=': 'double'에서 'float'(으)로 잘립니다.
+D:\download\BaseProject\SimpleGame\Renderer.cpp(396,25): warning C4305: '+=': 'double'에서 'float'(으)로 잘립니다.
+D:\download\BaseProject\SimpleGame\Renderer.cpp(424,25): warning C4305: '+=': 'double'에서 'float'(으)로 잘립니다.
   SimpleGame.vcxproj -> D:\download\BaseProject\x64\Debug\SimpleGame.exe

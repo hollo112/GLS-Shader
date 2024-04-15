@@ -1,12 +1,15 @@
 #version 330
 
-in vec3 a_Position;
+attribute vec3 a_Position;		//attribute, in 동일
 in float a_StartTime;
 in vec3 a_Velocity;
 in float a_LifeTime;
 in float a_Amp;
 in float a_Period;
 in float a_Value;
+in vec4 a_Color;
+
+out vec4 v_Color;
 
 uniform float u_Time = 0;
 uniform	float u_Period = 2.0;
@@ -23,6 +26,8 @@ void Basic()
 {
 	vec4 newPosition = vec4(a_Position.xy * a_StartTime, 0, 1);
 	gl_Position = newPosition;
+	
+	v_Color = a_Color;
 }
 
 void Velocity()
@@ -44,6 +49,8 @@ void Velocity()
 	}
 
 	gl_Position = newPosition;
+	
+	v_Color = a_Color;
 }
 
 void Line()
@@ -53,6 +60,8 @@ void Line()
 	newPosition.xyz = (a_Position + c_StartPos) + c_Velocity * newTime;
 	newPosition.w = 1;
 	gl_Position = newPosition;
+	
+	v_Color = a_Color;
 }
 
 void Circle()
@@ -63,6 +72,8 @@ void Circle()
 	newPosition.xy = a_Position.xy + trans;
 	newPosition.zw = vec2( 0, 1 );
 	gl_Position = newPosition;
+	
+	v_Color = a_Color;
 }
 
 void Parablola()
@@ -76,10 +87,14 @@ void Parablola()
 	newPosition.xy = vec2(transX, transY);
 	newPosition.zw = vec2( 0, 1 );
 	gl_Position = newPosition;
+	
+	v_Color = a_Color;
 }
 
 void Triangle()
 {
+
+	v_Color = a_Color;
 	
 }
 
@@ -112,6 +127,8 @@ void CircleShape()
 	}
 
 	gl_Position = newPosition;
+	
+	v_Color = a_Color;
 }
 
 void CircleShapeCycle()
@@ -143,6 +160,8 @@ void CircleShapeCycle()
 	}
 
 	gl_Position = newPosition;
+	
+	v_Color = a_Color;
 }
 
 void HeartShapeCycle()
@@ -155,6 +174,7 @@ void HeartShapeCycle()
 	if(t > 0)
 	{
 		t = a_LifeTime * fract(t / a_LifeTime);
+		float particleAlpha = 1 - t / a_LifeTime;
 		float tt = t * t;
 		float value = a_StartTime * 2.0 * c_PI;
 		float x = 16 * pow(sin(value), 3);
@@ -169,10 +189,12 @@ void HeartShapeCycle()
 		newPosition.xy = newPosition.xy + a_Velocity.xy * t + 0.5 * c_2DGravity * tt;
 		//newPosition.y = newPosition.y  + sin((newPosition.x + 1) * c_PI);
 		newPosition.xy = newPosition.xy  + newDir * (t * 0.1) * amp * sin(t* c_PI*period);			// t가 흐를수록 뒤에 더 증가
+		v_Color = vec4(a_Color.rgb, particleAlpha);
 	}
 	else
 	{
 		newPosition.x = 10000000;
+		v_Color = a_Color;
 	}
 
 	gl_Position = newPosition;
