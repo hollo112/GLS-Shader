@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "Renderer.h"
+#include "LoadPng.h"
+#include "assert.h"
 
 Renderer::Renderer(int windowSizeX, int windowSizeY)
 {
@@ -21,12 +23,32 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	m_SolidRectShader = CompileShaders("./Shaders/SolidRect.vs", "./Shaders/SolidRect.fs");
 	m_ParticleShader = CompileShaders("./Shaders/Particle.vs", "./Shaders/Particle.fs");	// 파티클 쉐이더 사용
 	m_ParticleCloudShader = CompileShaders("./Shaders/ParticleCloud.vs", "./Shaders/ParticleCloud.fs");
-
+	m_FSSandboxShader = CompileShaders("./Shaders/FSSandbox.vs", "./Shaders/FSSandbox.fs");
+	m_GridMeshShader = CompileShaders("./Shaders/GridMesh.vs", "./Shaders/GridMesh.fs");
+	m_TextureSandboxShader = CompileShaders("./Shaders/TextureSandbox.vs", "./Shaders/TextureSandbox.fs");
+	
 	//Create VBOs
 	CreateVertexBufferObjects();
 
 	//Create Paricle Cloud
 	CreateParticleCloud(5000);
+
+	//Create Grid Mesh
+	CreateGridMesh(32, 32);
+
+	//
+	m_RGBTexture = CreatePngTexture("./rgb.png", GL_NEAREST);
+	m_NumberTexture[0] = CreatePngTexture("./Textures/0.png", GL_NEAREST);
+	m_NumberTexture[1] = CreatePngTexture("./Textures/1.png", GL_NEAREST);
+	m_NumberTexture[2] = CreatePngTexture("./Textures/2.png", GL_NEAREST);
+	m_NumberTexture[3] = CreatePngTexture("./Textures/3.png", GL_NEAREST);
+	m_NumberTexture[4] = CreatePngTexture("./Textures/4.png", GL_NEAREST);
+	m_NumberTexture[5] = CreatePngTexture("./Textures/5.png", GL_NEAREST);
+	m_NumberTexture[6] = CreatePngTexture("./Textures/6.png", GL_NEAREST);
+	m_NumberTexture[7] = CreatePngTexture("./Textures/7.png", GL_NEAREST);
+	m_NumberTexture[8] = CreatePngTexture("./Textures/8.png", GL_NEAREST);
+	m_NumberTexture[9] = CreatePngTexture("./Textures/9.png", GL_NEAREST);
+	m_NumbersTexture = CreatePngTexture("./Textures/numbers.png", GL_NEAREST);
 
 	if (m_SolidRectShader > 0 && m_VBORect > 0)
 	{
@@ -75,6 +97,38 @@ void Renderer::CreateVertexBufferObjects()
 	glGenBuffers(1, &m_ParticleVBO);					//	m_TestVBO에 특정한 아이디가 만들어져 들어가게됨
 	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBO);		// 작업대에 VBO를 올려놓음
 	glBufferData(GL_ARRAY_BUFFER, sizeof(particleVerts), particleVerts, GL_STATIC_DRAW);
+	
+	size = 0.5f;
+	float FSSandboxVerts[] = {
+		-size, -size, 0.0f,
+		size, size, 0.0f,
+		-size, size, 0.0f,
+		-size, -size, 0.0f,
+		size, -size, 0.0f,
+		size, size, 0.0f
+	};
+	//float* a = new float[100];							// X -> sizeof(a)를 하면 포인터의 크기를 넘겨줌
+
+	glGenBuffers(1, &m_FSSandboxVBO);					//	m_TestVBO에 특정한 아이디가 만들어져 들어가게됨
+	glBindBuffer(GL_ARRAY_BUFFER, m_FSSandboxVBO);		// 작업대에 VBO를 올려놓음
+	glBufferData(GL_ARRAY_BUFFER, sizeof(FSSandboxVerts), FSSandboxVerts, GL_STATIC_DRAW);
+
+	size = 0.5f;
+	float TextureSandboxVerts[] = {
+		-size, -size, 0, 0, 1,
+		size, size, 0, 1, 0,
+		-size, size, 0, 0, 0,
+		-size, -size, 0, 0, 1,
+		size, -size, 0, 1, 1,
+		size, size, 0, 1, 0
+	};
+	//float* a = new float[100];							// X -> sizeof(a)를 하면 포인터의 크기를 넘겨줌
+
+	glGenBuffers(1, &m_TextureSandboxVBO);					//	m_TestVBO에 특정한 아이디가 만들어져 들어가게됨
+	glBindBuffer(GL_ARRAY_BUFFER, m_TextureSandboxVBO);		// 작업대에 VBO를 올려놓음
+	glBufferData(GL_ARRAY_BUFFER, sizeof(TextureSandboxVerts), TextureSandboxVerts, GL_STATIC_DRAW);
+
+
 
 }
 
@@ -369,6 +423,117 @@ void Renderer::CreateParticleCloud(int numParticles)
 	delete[] vertices;
 }
 
+void Renderer::CreateGridMesh(int x, int y)
+{
+	float basePosX = -0.5f;
+	float basePosY = -0.5f;
+	float targetPosX = 0.5f;
+	float targetPosY = 0.5f;
+
+	int pointCountX = x;
+	int pointCountY = y;
+
+	float width = targetPosX - basePosX;
+	float height = targetPosY - basePosY;
+
+	float* point = new float[pointCountX * pointCountY * 2];
+	float* vertices = new float[(pointCountX - 1) * (pointCountY - 1) * 2 * 3 * 3];
+	m_GridMeshVertexCount = (pointCountX - 1) * (pointCountY - 1) * 2 * 3;
+
+	//Prepare points
+	for (int x = 0; x < pointCountX; x++)
+	{
+		for (int y = 0; y < pointCountY; y++)
+		{
+			point[(y * pointCountX + x) * 2 + 0] = basePosX + width * (x / (float)(pointCountX - 1));
+			point[(y * pointCountX + x) * 2 + 1] = basePosY + height * (y / (float)(pointCountY - 1));
+		}
+	}
+
+	//Make triangles
+	int vertIndex = 0;
+	for (int x = 0; x < pointCountX - 1; x++)
+	{
+		for (int y = 0; y < pointCountY - 1; y++)
+		{
+			//Triangle part 1
+			vertices[vertIndex] = point[(y * pointCountX + x) * 2 + 0];
+			vertIndex++;
+			vertices[vertIndex] = point[(y * pointCountX + x) * 2 + 1];
+			vertIndex++;
+			vertices[vertIndex] = 0.f;
+			vertIndex++;
+			vertices[vertIndex] = point[((y + 1) * pointCountX + (x + 1)) * 2 + 0];
+			vertIndex++;
+			vertices[vertIndex] = point[((y + 1) * pointCountX + (x + 1)) * 2 + 1];
+			vertIndex++;
+			vertices[vertIndex] = 0.f;
+			vertIndex++;
+			vertices[vertIndex] = point[((y + 1) * pointCountX + x) * 2 + 0];
+			vertIndex++;
+			vertices[vertIndex] = point[((y + 1) * pointCountX + x) * 2 + 1];
+			vertIndex++;
+			vertices[vertIndex] = 0.f;
+			vertIndex++;
+
+			//Triangle part 2
+			vertices[vertIndex] = point[(y * pointCountX + x) * 2 + 0];
+			vertIndex++;
+			vertices[vertIndex] = point[(y * pointCountX + x) * 2 + 1];
+			vertIndex++;
+			vertices[vertIndex] = 0.f;
+			vertIndex++;
+			vertices[vertIndex] = point[(y * pointCountX + (x + 1)) * 2 + 0];
+			vertIndex++;
+			vertices[vertIndex] = point[(y * pointCountX + (x + 1)) * 2 + 1];
+			vertIndex++;
+			vertices[vertIndex] = 0.f;
+			vertIndex++;
+			vertices[vertIndex] = point[((y + 1) * pointCountX + (x + 1)) * 2 + 0];
+			vertIndex++;
+			vertices[vertIndex] = point[((y + 1) * pointCountX + (x + 1)) * 2 + 1];
+			vertIndex++;
+			vertices[vertIndex] = 0.f;
+			vertIndex++;
+		}
+	}
+
+	glGenBuffers(1, &m_GridMeshVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_GridMeshVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (pointCountX - 1) * (pointCountY - 1) * 2 * 3 * 3, vertices, GL_STATIC_DRAW);
+}
+
+GLuint Renderer::CreatePngTexture(char* filePath, GLuint samplingMethod)
+{
+	//Load Png
+
+	std::vector<unsigned char> image;
+	unsigned width, height;
+
+	unsigned error = lodepng::decode(image, width, height, filePath);
+
+	if (error != 0)
+
+	{
+
+		std::cout << "PNG image loading failed:" << filePath << std::endl;
+
+		assert(0);
+
+	}
+
+	GLuint temp;
+	glGenTextures(1, &temp);
+	glBindTexture(GL_TEXTURE_2D, temp);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+		GL_UNSIGNED_BYTE, &image[0]);
+
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, samplingMethod);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, samplingMethod);
+
+	return temp;
+}
+
 void Renderer::DrawTest()
 {
 	//Program select
@@ -475,4 +640,103 @@ void Renderer::DrawParticleCloud()
 	glDisableVertexAttribArray(attribPosition);
 
 	glDisable(GL_BLEND);
+}
+
+void Renderer::DrawFSSandbox()
+{
+	//glEnable(GL_BLEND);	//alphaBlending
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	//Program select
+	GLuint shader = m_FSSandboxShader;
+	glUseProgram(shader);
+	GLuint stride = sizeof(float) * 3;
+
+	int ulTime = glGetUniformLocation(shader, "u_Time");
+	glUniform1f(ulTime, m_FSSandboxTime);
+	//m_ParticleTime += 0.016;
+	m_FSSandboxTime += 0.016;
+
+	int attribPosition = glGetAttribLocation(shader, "a_Position");
+	glEnableVertexAttribArray(attribPosition);													// attribPosition을 쓸것이다
+	glBindBuffer(GL_ARRAY_BUFFER, m_FSSandboxVBO);
+	glVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, stride, 0);			// 3-> float포인트의 개수, 0 -> GL_ARRAY_BUFFER의 시작점부터 읽어라, sizeof(float) * 3 -> 3으로 나눠짐
+
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glDisableVertexAttribArray(attribPosition);
+
+	glDisable(GL_BLEND);
+}
+
+void Renderer::DrawGridMesh()
+{
+	//Program select
+	GLuint shader = m_GridMeshShader;
+	glUseProgram(shader);															// 
+
+	int attribPosition = glGetAttribLocation(shader, "a_Position");
+	glEnableVertexAttribArray(attribPosition);													// attribPosition을 쓸것이다
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_GridMeshVBO);
+	glVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, 0);			// 3-> float포인트의 개수, 0 -> GL_ARRAY_BUFFER의 시작점부터 읽어라, sizeof(float) * 3 -> 3으로 나눠짐
+
+	GLuint ul_Time = glGetUniformLocation(shader, "u_Time");
+	glUniform1f(ul_Time, m_GridMeshTime);
+	m_GridMeshTime += 0.016;
+
+	glDrawArrays(GL_LINE_STRIP, 0, m_GridMeshVertexCount);
+
+	glDisableVertexAttribArray(attribPosition);
+}
+
+void Renderer::DrawTextureSandbox()
+{
+	//Program select
+	GLuint shader = m_TextureSandboxShader;
+	glUseProgram(shader);			
+	GLuint stride = sizeof(float) * 5;
+
+	int attribPosition = glGetAttribLocation(shader, "a_Position");
+	glEnableVertexAttribArray(attribPosition);													// attribPosition을 쓸것이다
+	glBindBuffer(GL_ARRAY_BUFFER, m_TextureSandboxVBO);
+	glVertexAttribPointer(attribPosition, 3, GL_FLOAT, GL_FALSE, stride, 0);			// 3-> float포인트의 개수, 0 -> GL_ARRAY_BUFFER의 시작점부터 읽어라, sizeof(float) * 3 -> 3으로 나눠짐
+
+	int attribTexture = glGetAttribLocation(shader, "a_Texture");
+	glEnableVertexAttribArray(attribTexture);													// attribPosition을 쓸것이다
+	glBindBuffer(GL_ARRAY_BUFFER, m_TextureSandboxVBO);
+	glVertexAttribPointer(attribTexture, 2, GL_FLOAT, GL_FALSE, stride, (GLvoid*)(sizeof(float) * 3));			// 3-> float포인트의 개수, 0 -> GL_ARRAY_BUFFER의 시작점부터 읽어라, sizeof(float) * 3 -> 3으로 나눠짐
+
+
+	GLuint ul_Time = glGetUniformLocation(shader, "u_Time");
+	glUniform1f(ul_Time, m_TextureSandboxTime);
+	m_TextureSandboxTime += 0.016;
+
+	int ul_Texture = glGetUniformLocation(shader, "u_Texture");
+	//glUniform1i(ul_Texture, 0);
+	glUniform1i(ul_Texture, 0);
+	glActiveTexture(GL_TEXTURE0);		// 0번 슬롯
+	glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
+
+	int ul_Texture1 = glGetUniformLocation(shader, "u_NumberTexture");
+	//glUniform1i(ul_Texture, 0);
+	int textures[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+	glUniform1iv(ul_Texture1, 10, textures);
+
+	int ul_Texture2 = glGetUniformLocation(shader, "u_NumbersTexture");
+	//glUniform1i(ul_Texture, 0);
+	glUniform1i(ul_Texture2, 11);
+
+	for (int i = 0; i < 10; ++i)		//Numbertexture bind
+	{
+		glActiveTexture(GL_TEXTURE1 + i);		
+		glBindTexture(GL_TEXTURE_2D, m_NumberTexture[i]);
+	}
+	glActiveTexture(GL_TEXTURE11);
+	glBindTexture(GL_TEXTURE_2D, m_NumbersTexture);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glDisableVertexAttribArray(attribPosition);
 }
