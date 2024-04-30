@@ -54,7 +54,7 @@ void P5()
 	float countY = 2;
 	vec2 newTexPos;
 	float tx = fract(padding * floor(v_TexPos.y*countY)) + v_TexPos.x * countX;	// 0-1, 0-1, 0-1
-	float ty = fract(v_TexPos.y *countY);
+	float ty = fract(v_TexPos.y * countY);
 	newTexPos = vec2(tx, ty);
 
 	FragColor = texture(u_Texture, newTexPos );
@@ -90,9 +90,20 @@ void P7()
 	FragColor = texture(u_NumbersTexture, newTexPos );
 }
 
+void P8Test()
+{
+	vec2 newTexPos;
+	float tx = v_TexPos.x;
+	float ty =  (2 - floor(v_TexPos.x * 3)) / 3;
+	newTexPos = vec2(tx, ty);
+
+	FragColor = texture(u_Texture, newTexPos );
+	//FragColor = vec4(tx, ty, 0, 1);
+}
+
 void main()
 {
 	
-	P7();
+	P8Test();
 
 }

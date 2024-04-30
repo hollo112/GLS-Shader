@@ -39,7 +39,25 @@ void SphereMapping()
 	v_Color = vec4(1);
 }
 
+void MultiSphere()
+{
+	float circleCount = 3;				// 0 ~ 1 사이에 원을 몇개를 만들것인가
+	vec2 circleCenter = vec2(0, 0);  
+	//float maxDist = 0.5;
+	float dist = distance(a_Position.xy, circleCenter);
+	float inputs = circleCount * c_PI * 4 * dist + u_Time; // 시험에 이부분 빈칸 -> 이런식으로 나옴
+	
+	float sinValue = sin(inputs);
+
+	//FragColor = vec4(sinValue);
+
+
+
+	v_Color = vec4((sinValue + 1) / 2);
+}
+
 void main()
 {
-	SphereMapping();
+	//SphereMapping();
+	MultiSphere();
 }

@@ -83,5 +83,5 @@ void main()
 {
 	//Circle();
 	//Circles();
-	SinGragph();
+	//SinGragph();
 }

@@ -127,9 +127,6 @@ void Renderer::CreateVertexBufferObjects()
 	glGenBuffers(1, &m_TextureSandboxVBO);					//	m_TestVBO에 특정한 아이디가 만들어져 들어가게됨
 	glBindBuffer(GL_ARRAY_BUFFER, m_TextureSandboxVBO);		// 작업대에 VBO를 올려놓음
 	glBufferData(GL_ARRAY_BUFFER, sizeof(TextureSandboxVerts), TextureSandboxVerts, GL_STATIC_DRAW);
-
-
-
 }
 
 void Renderer::AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)

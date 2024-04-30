@@ -208,7 +208,7 @@ void main()
 	//Parablola();
 	//Basic();
 	//Velocity();
-	//CircleShape();
+	CircleShape();
 	//CircleShapeCycle();
-	HeartShapeCycle();
+	//HeartShapeCycle();
 }
